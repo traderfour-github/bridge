@@ -1,0 +1,104 @@
+version: "3.8"
+
+networks:
+  project_network:
+    driver: bridge
+
+services:
+
+  redis:
+    container_name: ${APP_NAME}-redis
+    image: redis:alpine
+    hostname: ${APP_NAME}_redis_host
+    environment:
+      DATABASE_URL: redis://
+    env_file:
+      - ./.docker/redis/config.ini
+    ports:
+      - ${REDIS_PORT:-6379}:6379
+    volumes:
+      - redis:/data
+    networks:
+      - project_network
+    tty: true
+    restart: unless-stopped
+
+  kafdrop:
+    container_name: ${APP_NAME}-kafdrop
+    image: obsidiandynamics/kafdrop
+    restart: "no"
+    networks:
+      - project_network
+    ports:
+      - ${KAFDROP_PORT:-9000}:9000
+    env_file:
+      - ./.docker/kafdrop/config.ini
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - "kafka"
+
+  kafka:
+    container_name: ${APP_NAME}-kafka
+    image: obsidiandynamics/kafka
+    restart: "no"
+    ports:
+      - 2181:2181
+      - ${KAFKA_PORT:-9092}:9092
+    networks:
+      - project_network
+    env_file:
+      - ./.docker/kafka/config.ini
+    environment:
+      KAFKA_LISTENERS: "INTERNAL://:29092,EXTERNAL://:${KAFKA_PORT}"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://kafka:29092,EXTERNAL://127.0.0.1:${KAFKA_PORT}"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT: "6000"
+      KAFKA_RESTART_ATTEMPTS: "10"
+      KAFKA_RESTART_DELAY: "5"
+      ZOOKEEPER_AUTOPURGE_PURGE_INTERVAL: "0"
+
+  microservice:
+    container_name: ${APP_NAME}
+    build:
+      dockerfile: Dockerfile
+      context: .
+    restart: unless-stopped
+    networks:
+      - project_network
+    ports:
+      - ${APP_PORT:-3000}:3000
+    env_file:
+      - ./.docker/microservice/config.ini
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      KAFKA_PORT: ${KAFKA_PORT}
+      KAFDROP_PORT: ${KAFDROP_PORT}
+      KAFKA_DEFAULT_TOPIC: ${KAFKA_DEFAULT_TOPIC}
+      KAFKA_GROUP_ID: ${KAFKA_GROUP_ID}
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - redis
+      - kafdrop
+      - kafka
+    links:
+      - redis
+      - kafdrop
+      - kafka
+
+volumes:
+  redis:
+    driver: local
+    name: ${APP_NAME}_redis
+  kafdrop:
+    driver: local
+    name: ${APP_NAME}_kafdrop
+  kafka:
+    driver: local
+    name: ${APP_NAME}_kafka

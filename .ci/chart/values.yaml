@@ -1,0 +1,46 @@
+name: "sample"
+replicaCount: 1
+
+app:
+  name: Trader4-Microservice
+  secret: super-secure-secret
+  url: http://localhost:3000
+  port: 3000
+  env: development
+  jwt:
+    secret: ""
+  mongodb:
+    uri:
+  kafka:
+    broker: localhost:9092
+    topic: bridge
+    group_id: bridge-consumer
+  redis:
+    host: "127.0.0.1"
+    port: 6379
+  queue:
+    host:
+    port:
+  webhook_url: ""
+  check_auth_werify: ""
+
+ingressController: nginx
+
+service:
+  type: ClusterIP
+
+domainName: "bridge.trader4.net"
+wssDomainName: "wss.trader4.net"
+
+tls:
+  enabled: false
+  clusterIssuer: le-clusterissuer
+  secretName: bridge-trader4-net
+
+image:
+  repository: "trader4.{{ .Values.name }}-bridge"
+  pullPolicy: Always
+  tag: latest
+
+resources: {}
+tolerations: {}

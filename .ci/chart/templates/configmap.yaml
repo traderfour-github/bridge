@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}
+data:
+  .env: |
+    #
+    # App Init
+    APP_SECRET={{ $.Values.app.secret }}
+    APP_ENV={{ $.Values.app.env }}
+    APP_NAME="{{ $.Values.app.name }}"
+    APP_URL={{ $.Values.app.url }}
+    APP_PORT={{ $.Values.app.port }}
+
+    #
+    # Database Configration
+    MONGODB_URI={{ $.Values.app.mongodb.uri }}
+
+    #
+    # Kafka Configration
+    KAFKA_BROKER={{ $.Values.app.kafka.broker }}
+    KAFKA_TOPIC={{ $.Values.app.kafka.topic }}
+    KAFKA_GROUP_ID={{ $.Values.app.kafka.group_id }}
+
+    #
+    # Redis Configuration
+    REDIS_HOST={{ $.Values.app.redis.host }}
+    REDIS_PORT={{ $.Values.app.redis.port }}
+    BRIDGE_DURATION=7200
+
+    #
+    # Queue
+    QUEUE_HOST={{ $.Values.app.queue.host }}
+    QUEUE_PORT={{ $.Values.app.queue.port }}
+
+    #
+    # External Api
+    CHECK_AUTH_WERIFY={{ $.Values.app.check_auth_werify }}
+    WEBHOOK_URL={{ $.Values.app.webhook_url }}

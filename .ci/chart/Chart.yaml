@@ -1,0 +1,12 @@
+apiVersion: v2
+appVersion: 0.0.1
+name: traderfour-bridge
+version: 0.0.1
+description: A helm chart for traderfour wwss project
+home: https://github.com/traderfour/bridge
+maintainers:
+- name: Josh
+  url: https://github.com/mrjosh
+sources:
+- https://github.com/traderfour/bridge
+type: application
